@@ -7,6 +7,10 @@ from sklearn.preprocessing import StandardScaler
 import folium
 from streamlit_folium import folium_static
 import numpy as np
+import webbrowser
+# Librerías SMS
+from twilio.rest import Client
+from twilio.twiml.messaging_response import MessagingResponse
 
 # Carga del modelo de ML
 model=pickle.load(open("model_ml.pickle","rb"))
@@ -48,8 +52,8 @@ def apply_filter(df):
 
     return df[df.magType=="mw"]
 
-# Carga de datos de la API (últimos 7 días) y ETL
-start_date=pd.to_datetime(datetime.now())-timedelta(weeks=1)
+# Carga de datos de la API (últimos 30 días) y ETL
+start_date=pd.to_datetime(datetime.now())-timedelta(days=30)
 end_date = pd.to_datetime(datetime.now())+timedelta(days=1)
 url = f"https://earthquake.usgs.gov/fdsnws/event/1/query?format=csv&starttime={start_date.strftime('%Y-%m-%d')}&endtime={end_date.strftime('%Y-%m-%d')}"
 df=pd.read_csv(url)
@@ -77,10 +81,41 @@ y_pred=model.predict(df_pred)
 df["hazard"]=y_pred
 df["hazard"]=df.hazard.apply(lambda x: "High" if x==0 else ("Medium" if x==1 else "Low"))
 
+### SMS
+# Dataframe SMS
+df_sms=df[df.country=="Peru"].sort_values(by="time",ascending=False)
+
+# Credenciales SMS
+account_sid = 'AC7b251f302c1219ff41ce9cfecf982895'
+auth_token = '5cb0981ddb5b22043439d5c6fec9e274'
+twilio_whatsapp_number = 'whatsapp:+14155238886'
+twilio_sms_number = '+12056228055'  
+recipient_phone_number = '+573229418057'
+recipient_whatsapp_number = 'whatsapp:+573229418057'
+
+# Funciones SMS
+def send_whatsapp(message_body):
+    client = Client(account_sid, auth_token)
+    message = client.messages.create(
+        body=message_body,
+        from_=twilio_whatsapp_number,
+        to=recipient_whatsapp_number
+    )
+    return message.sid
+
+def send_sms(message_body):
+    client = Client(account_sid, auth_token)
+    message = client.messages.create(
+        body=message_body,
+        from_=twilio_sms_number,
+        to=recipient_phone_number
+    )
+    return message.sid
+
 ### Visualizaciones
 
 # Título
-st.title("Earthquake Map - Last 7 Days")
+st.title("Earthquake Map - Last 30 Days")
 
 # Botones de país
 selected_country=st.sidebar.radio("Country",["All", "USA", "Japan", "Peru"],index=0)
@@ -138,3 +173,29 @@ else:
     filtered_df=filtered_df[["time","mag","depth","country","hazard","place"]]
     filtered_df=filtered_df.rename(columns={"time":"date(UTC)","mag":"magnitude(Mw)","depth":"depth(km)"})
     st.dataframe(filtered_df.reset_index(drop=True))
+
+# Creación del botón que redigirá a la página del Dashboard
+if st.button("Go to Earthquake Dashboard"):
+    url = "https://app.powerbi.com/view?r=eyJrIjoiODI0MWI3ODEtZmM2My00NGM1LWI5YmYtNWRmMGFkYWU4ZjNjIiwidCI6IjJiZTM1NDkyLWEzMmEtNDBiNS1hOWY4LWZmMjMxMTBmZDBhYyIsImMiOjR9&pageName=ReportSectiona4a149bcb98fb302c702"
+    webbrowser.open_new_tab(url)
+
+# Imagen relacionada con el botón del Dashboard
+image_url="Dashboard.png"
+st.image(image_url)
+
+# Creación del botón que envía el mensaje de sismo
+if st.button("Alert Test Message"):
+    latest_earthquake_data = df_sms.iloc[0]
+    fecha_utc = latest_earthquake_data['time']
+    place = latest_earthquake_data['place']
+    profundidad = latest_earthquake_data['depth']
+    magnitud = latest_earthquake_data['mag']
+    hazard = latest_earthquake_data['hazard']
+
+    message_body = f"SAP - Seismic Alert Pro.\n¿Estas bien? Hemos registrado un sismo en Perú\nÚltimo sismo en Perú:\nFecha UTC: {fecha_utc} \nMagnitud (Mw): {magnitud} \nPeligrosidad: {hazard} \nEpicentro: {place} \nProfundidad (km): {profundidad}"
+
+    whatsapp_message_id = send_whatsapp(message_body)
+    sms_message_id = send_sms(message_body)
+
+    print("WhatsApp enviado correctamente. ID del mensaje:", whatsapp_message_id)
+    print("SMS enviado correctamente. ID del mensaje:", sms_message_id)
