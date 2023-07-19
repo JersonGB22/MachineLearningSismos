@@ -7,7 +7,6 @@ from sklearn.preprocessing import StandardScaler
 import folium
 from streamlit_folium import folium_static
 import numpy as np
-import webbrowser
 # Librerías SMS
 from twilio.rest import Client
 from twilio.twiml.messaging_response import MessagingResponse
@@ -175,9 +174,9 @@ else:
     st.dataframe(filtered_df.reset_index(drop=True))
 
 # Creación del botón que redigirá a la página del Dashboard
-if st.button("Go to Earthquake Dashboard"):
-    url = "https://app.powerbi.com/view?r=eyJrIjoiODI0MWI3ODEtZmM2My00NGM1LWI5YmYtNWRmMGFkYWU4ZjNjIiwidCI6IjJiZTM1NDkyLWEzMmEtNDBiNS1hOWY4LWZmMjMxMTBmZDBhYyIsImMiOjR9&pageName=ReportSectiona4a149bcb98fb302c702"
-    webbrowser.open_new_tab(url)
+if st.button("Link Earthquake Dashboard"):
+    url="https://app.powerbi.com/view?r=eyJrIjoiODI0MWI3ODEtZmM2My00NGM1LWI5YmYtNWRmMGFkYWU4ZjNjIiwidCI6IjJiZTM1NDkyLWEzMmEtNDBiNS1hOWY4LWZmMjMxMTBmZDBhYyIsImMiOjR9&pageName=ReportSectiona4a149bcb98fb302c702"
+    st.markdown(f"[Go to Earthquake Dashboard]({url})")
 
 # Imagen relacionada con el botón del Dashboard
 image_url="Dashboard.png"
