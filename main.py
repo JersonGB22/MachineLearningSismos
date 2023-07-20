@@ -53,9 +53,15 @@ def apply_filter(df):
 
 # Carga de datos de la API (últimos 30 días) y ETL
 start_date=pd.to_datetime(datetime.now())-timedelta(days=30)
-end_date = pd.to_datetime(datetime.now())+timedelta(days=1)
-url = f"https://earthquake.usgs.gov/fdsnws/event/1/query?format=csv&starttime={start_date.strftime('%Y-%m-%d')}&endtime={end_date.strftime('%Y-%m-%d')}"
-df=pd.read_csv(url)
+end_date=pd.to_datetime(datetime.now())+timedelta(days=1)
+interval=pd.DateOffset(days=10)
+df_list=[]
+while start_date<=end_date:
+    next_date=start_date+interval
+    url=f"https://earthquake.usgs.gov/fdsnws/event/1/query?format=csv&starttime={start_date.strftime('%Y-%m-%d')}&endtime={next_date.strftime('%Y-%m-%d')}"
+    df_list.append(pd.read_csv(url))
+    start_date+=interval
+df=pd.concat(df_list)
 df.drop_duplicates(keep=False,inplace=True)
 df.dropna(subset=["latitude","longitude","depth","mag","magType","place"],inplace=True)
 df=df[df.type=="earthquake"]
@@ -129,6 +135,14 @@ selected_date=st.selectbox("Select a date",array)
 if selected_date!="All":
     df=df[df.time.dt.strftime("%Y-%m-%d")==selected_date]
 
+# Función que crea la leyenda de gravedad de sismos
+def create_legend():
+    high_circle='<span style="color:red">&#11044;</span>'
+    medium_circle='<span style="color:yellow">&#11044;</span>'
+    low_circle='<span style="color:green">&#11044;</span>'
+    legend=f"{high_circle} High&nbsp;&nbsp;&nbsp;&nbsp;{medium_circle} Medium&nbsp;&nbsp;&nbsp;&nbsp;{low_circle} Low"
+    st.markdown(legend,unsafe_allow_html=True)
+
 # Filtros del DataFrame según los botones seleccionados
 if selected_country=="All" and selected_hazard == "All":
     filtered_df=df
@@ -143,6 +157,7 @@ else:
 if filtered_df.empty:
     m=folium.Map(location=[0,0],zoom_start=1)
     st.subheader("Map")
+    create_legend()
     folium_static(m)
 
     df=df[["time","mag","depth","country","hazard","place"]]
@@ -165,6 +180,7 @@ else:
 
     # Visualización del mapa en la página
     st.subheader("Map")
+    create_legend()
     folium_static(m)
 
     # Visualización del DataFrame filtrado
