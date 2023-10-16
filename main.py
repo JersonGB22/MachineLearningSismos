@@ -191,7 +191,7 @@ else:
 
 # Creación del botón que redigirá a la página del Dashboard
 if st.button("Link Earthquake Dashboard"):
-    url="https://app.powerbi.com/view?r=eyJrIjoiODI0MWI3ODEtZmM2My00NGM1LWI5YmYtNWRmMGFkYWU4ZjNjIiwidCI6IjJiZTM1NDkyLWEzMmEtNDBiNS1hOWY4LWZmMjMxMTBmZDBhYyIsImMiOjR9&pageName=ReportSectiona4a149bcb98fb302c702"
+    url="https://app.powerbi.com/view?r=eyJrIjoiN2QxMDA1ZGItNmZlYi00OTI1LTk4MzktMmE5Zjg2NjliZGMzIiwidCI6IjJiZTM1NDkyLWEzMmEtNDBiNS1hOWY4LWZmMjMxMTBmZDBhYyIsImMiOjR9&pageName=ReportSectiona4a149bcb98fb302c702"
     st.markdown(f"[Go to Earthquake Dashboard]({url})")
 
 # Imagen relacionada con el botón del Dashboard
